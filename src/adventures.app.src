@@ -1,0 +1,12 @@
+{application, adventures,
+ [
+  {description, "Adventures in Erlang"},
+  {vsn, "0.1"},
+  {registered, [adventures_app, adventures_sup, adventures_server]},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { adventures_app, []}},
+  {start_phases, []}
+ ]}.
