@@ -1,7 +1,7 @@
 {application, adventures,
  [
   {description, "Adventures in Erlang"},
-  {vsn, "0.1"},
+  {vsn, "0.2"},
   {registered, [adventures_app, adventures_sup, adventures_server]},
   {applications, [
                   kernel,

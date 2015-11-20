@@ -1,4 +1,4 @@
--module(adventures_sup).
+-module(web_sup).
 
 -behaviour(supervisor).
 
@@ -23,6 +23,12 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}
-      , [?CHILD(adventures_server, worker), ?CHILD(web_sup, supervisor)]
-    }}.
+    {ok, _} = cowboy:start_http(http, 3, [{port, 9002}], [{env, [{dispatch, rules()}]}]),
+    {ok, { {one_for_one, 5, 10}, [] }}.
+
+rules() ->
+  cowboy_router:compile([
+    {'_', [                  %% handle all domains
+       {'_', n2o_cowboy, []}  %% handle all urls
+     ]}
+  ]).

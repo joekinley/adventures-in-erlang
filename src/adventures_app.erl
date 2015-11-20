@@ -12,6 +12,8 @@
 start() -> start([],[]).
 
 start(_StartType, _StartArgs) ->
+    application:ensure_all_started(n2o),
+    application:set_env(n2o, route, routes),
     adventures_sup:start_link().
 
 stop(_State) ->

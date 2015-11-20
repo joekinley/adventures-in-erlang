@@ -27,8 +27,7 @@ start_link() ->
 %% ------------------------------------------------------------------
 
 init(Args) ->
-    io:format("Our server started~n", []),
-    loop(),
+    %loop(),
     {ok, Args}.
 
 handle_call(_Request, _From, State) ->
@@ -50,7 +49,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-loop() ->
-  receive
-    _ -> loop()
-  end.
+%loop() ->
+%  receive
+%    _ -> loop()
+%  end.
