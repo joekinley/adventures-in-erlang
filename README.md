@@ -12,4 +12,4 @@ $ rebar get-deps compile
 $ ./run.sh
 ```
 
-The basic web server is set to (localhost:9002).
+The basic web server is set to [localhost:9002](http://localhost:9002).
