@@ -1,6 +1,8 @@
--module(adventures_server).
+-module(game).
 -behaviour(gen_server).
+-include("defines.hrl").
 -define(SERVER, ?MODULE).
+-record(state, {sockets, name, map, server}).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
@@ -20,14 +22,16 @@
 %% ------------------------------------------------------------------
 
 start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+    gen_server:start_link(?MODULE, [], []).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init(Args) ->
-    {ok, Args}.
+init([From, Socket, Name]) ->
+  io:format("New game started~n", []),
+  State = #state{sockets=[Socket], name=Name, server=From},
+  {ok, State}.
 
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
@@ -48,7 +52,10 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-%loop() ->
-%  receive
-%    _ -> loop()
-%  end.
+% starts the game for the given username
+%start_game(Username).
+
+% initializes a brand new game for the given username
+%init_Game(Username).
+
+

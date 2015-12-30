@@ -9,7 +9,9 @@
 %% Application callbacks
 %% ===================================================================
 
-start() -> start([],[]).
+start() ->
+  application:start(sasl),
+  application:start(adventures).
 
 start(_StartType, _StartArgs) ->
     application:ensure_all_started(n2o),
@@ -17,4 +19,5 @@ start(_StartType, _StartArgs) ->
     adventures_sup:start_link().
 
 stop(_State) ->
-    ok.
+  io:format("Stopping application~n", []),
+  ok.
