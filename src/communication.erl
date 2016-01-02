@@ -36,6 +36,9 @@ init([Server]) ->
 handle_call({register_socket, Socket}, _From, State) ->
   NewState = State#state{socket=Socket},
   {reply, ok, NewState};
+handle_call({send_message, Message}, _From, State) ->
+  gen_tcp:send(State#state.socket, Message),
+  {reply, ok, State};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
@@ -56,7 +59,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% ------------------------------------------------------------------
 
 start_listening(Ip, Port) ->
-  gen_tcp:listen(Port, [binary, {active, false}, {reuseaddr, true}, {ip, Ip}, {keepalive, true}]).
+  gen_tcp:listen(Port, [binary, {active, true}, {reuseaddr, true}, {ip, Ip}, {keepalive, true}]).
 
 listener_loop(From, Server) ->
   case start_listening(?IP, ?PORT) of

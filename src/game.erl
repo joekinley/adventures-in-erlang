@@ -31,6 +31,7 @@ start_link() ->
 init([From, Communication, Name]) ->
   io:format("New game started~n", []),
   State = #state{communications=[Communication], name=Name, server=From},
+  gen_server:call(Communication, {send_message, "Ready Player One\n"}),
   {ok, State}.
 
 handle_call(_Request, _From, State) ->
