@@ -1,14 +1,14 @@
--module(game).
+-module(communication).
 -behaviour(gen_server).
 -include("defines.hrl").
 -define(SERVER, ?MODULE).
--record(state, {communications, name, map, server}).
+-record(state, {server, socket, game}).
 
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, listen_socket/2]).
+-export([start_link/0, listener_loop/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -22,17 +22,20 @@
 %% ------------------------------------------------------------------
 
 start_link() ->
-    gen_server:start_link(?MODULE, [], []).
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init([From, Communication, Name]) ->
-  io:format("New game started~n", []),
-  State = #state{communications=[Communication], name=Name, server=From},
+init([Server]) ->
+  State = #state{server=Server},
+  spawn_link(?SERVER, listener_loop, [self(), Server]),
   {ok, State}.
 
+handle_call({register_socket, Socket}, _From, State) ->
+  NewState = State#state{socket=Socket},
+  {reply, ok, NewState};
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
@@ -43,7 +46,7 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
-  ok.
+    ok.
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
@@ -52,16 +55,17 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-listen_socket(_From, Socket) ->
-  gen_tcp:send(Socket, "Waiting\n"),
-  io:format("Waiting 1~n", []),
-  Res = gen_tcp:recv(Socket, 0),
-  io:format("Waiting done answer: ~p~n", [Res]),
-  ok.
-% starts the game for the given username
-%start_game(Username).
+start_listening(Ip, Port) ->
+  gen_tcp:listen(Port, [binary, {active, false}, {reuseaddr, true}, {ip, Ip}, {keepalive, true}]).
 
-% initializes a brand new game for the given username
-%init_Game(Username).
-
-
+listener_loop(From, Server) ->
+  case start_listening(?IP, ?PORT) of
+    {ok, ListenSocket} -> case gen_tcp:accept(ListenSocket) of
+                            {ok, Socket}    -> gen_tcp:controlling_process(Socket, From),
+                                               gen_server:call(From, {register_socket, Socket}),
+                                               gen_server:call(Server, {renew_listener}),
+                                               gen_server:call(Server, {start_game, From});
+                            {error, Reason} -> {stop, Reason}
+                          end;
+    _                  -> gen_server:call(Server, {renew_listener})
+  end.

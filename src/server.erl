@@ -1,16 +1,15 @@
 -module(server).
 -behaviour(gen_server).
--include("defines.hrl").
 -define(SERVER, ?MODULE).
--record(state, {games, listener}). % local record -> games: a list of all games, listener -> current listener
--record(gameinfo, {sockets, name, pid}). % holds game information, a list of sockets and the game name
+-record(state, {games}). % local record -> games: a list of all games, listener -> current listener
+-record(gameinfo, {name, pid}). % holds game information, a list of sockets and the game name
 
 
 %% ------------------------------------------------------------------
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0, listener_loop/1]).
+-export([start_link/0]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -34,10 +33,10 @@ init(_Args) ->
   State = #state{games=[]},
   renew_listener(State).
 
-handle_call({start_game, Socket}, _From, State) ->
+handle_call({start_game, CommPid}, _From, State) ->
   UniqueName = tools:get_random_string(8),
-  case gen_server:start_link(game, [self(), Socket, UniqueName], []) of
-    {ok, Pid} -> NewGame = #gameinfo{sockets=[Socket], name=UniqueName, pid=Pid},
+  case gen_server:start_link(game, [self(), CommPid, UniqueName], []) of
+    {ok, Pid} -> NewGame = #gameinfo{name=UniqueName, pid=Pid},
                  NewState = State#state{games=State#state.games ++ [NewGame]},
                  {reply, ok, NewState};
     _         -> {reply, error, State}
@@ -66,21 +65,6 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Function Definitions
 %% ------------------------------------------------------------------
 
-start_listening(Ip, Port) ->
-  gen_tcp:listen(Port, [binary, {active, true}, {packet, 0}, {reuseaddr, true}, {ip, Ip}]).
-
 renew_listener(State) ->
-  Loop = spawn_link(?SERVER, listener_loop, [self()]),
-  NewState = State#state{listener=Loop},
-  {ok, NewState}.
-
-listener_loop(From) ->
-  case start_listening(?IP, ?PORT) of
-    {ok, ListenSocket} -> case gen_tcp:accept(ListenSocket) of
-                            {ok, Socket}    -> gen_server:call(From, {start_game, Socket}),
-                                               gen_server:call(From, {renew_listener});
-                            {error, Reason} -> {stop, Reason}
-                          end;
-    _                  -> gen_server:call(From, {renew_listener})
-  end.
-
+  gen_server:start_link(communication, [self()], []),
+  {ok, State}.
